@@ -1,11 +1,13 @@
-const {
+const {  
   client,
-  getAllUsers,
   createUser,
-  createPost,
   updateUser,
+  getAllUsers,
+  getUserById,
+  createPost,
   updatePost,
- 
+  getAllPosts,
+  getPostsByUser
 } = require('./index');
 
 async function dropTables() {
@@ -76,6 +78,8 @@ async function createInitialUsers() {
 async function createInitialPosts() {
   try {
     const [albert, sandra, glamgal] = await getAllUsers();
+
+    console.log("Starting to create posts...");
 
     await createPost({
       authorId: albert.id,
