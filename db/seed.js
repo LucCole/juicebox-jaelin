@@ -52,20 +52,25 @@ async function createTables() {
      "authorId" INTEGER REFERENCES users(id) NOT NULL,
      title VARCHAR(255) NOT NULL,
       content TEXT NOT NULL,
-     active BOOLEAN DEFAULT true
-      )
+     active BOOLEAN DEFAULT true,
+      );
+
     CREATE TABLE tags (
       id, SERIAL PRIMARY KEY,
-      name, VARCHAR(225) UNIQUE NOT NULL
-    )
+      name, VARCHAR(225) UNIQUE NOT NULL,
+    );
 
     CREATE TABLE post_tags (
     "postId", INTERGER REFERENCES posts(id),
     "tagId", INTERGER REFERENCES tag(id),
-    postId, VARCHAR(225) UNIQUE NOT NULL,
-    tagId, VARCHAR(225) UNIQUE NOT NULL
-    )
+      UNIQUE ("postId, "tagId"),
+    );
     `);
+  
+
+
+    // postId, VARCHAR(225) UNIQUE NOT NULL,
+    // tagId, VARCHAR(225) UNIQUE NOT NULL
 
     console.log("Finished building tables!");
   } catch (error) {
@@ -123,37 +128,41 @@ async function createInitialPosts() {
   }
 }
 
-async function createPostTag(postId, tagId) {
-  try {
-    await client.query(`
-      INSERT INTO post_tags("postId", "tagId")
-      VALUES ($1, $2)
-      ON CONFLICT ("postId", "tagId") DO NOTHING;
-    `, [postId, tagId]);
-  } catch (error) {
-    throw error;
-  }
-}
+// async function createPostTag(postId, tagId) {
+//   try {
+//     await client.query(`
+//       INSERT INTO post_tags("postId", "tagId")
+//       VALUES ($1, $2)
+//       ON CONFLICT ("postId", "tagId") DO NOTHING;
+//     `, [postId, tagId]);
+//   } catch (error) {
+//     throw error;
+//   }
+// }
   //part 3 adding tags to post
-  const createInitialTags = async() => {
-    try {
-      console.log('...starting to create tags...');
-      const [happy, sad, inspo, catman] = await createTags([
-        '#happy',
-        '#worst-day-ever',
-        '#youcandoanything',
-        '#catmandoeverything'
-      ]);
-      const [postOne, postTwo, postThree] = await getAllPosts();
-      await addTagsToPost(postOne.id, [happy, inspo]);
-      await addTagsToPost(postTwo.id, [sad]);
-      await addTagsToPost(postThree.id, [happy, catman, inspo]);
-      console.log('...finished creating tags...')
-    } catch (err) {
-      console.log('...error creating tags...')
-      throw err;
-    }
-  }
+
+
+
+  //directions say to removeCreateInitialTags
+  // const createInitialTags = async() => {
+  //   try {
+  //     console.log('...starting to create tags...');
+  //     const [happy, sad, inspo, catman] = await createTags([
+  //       '#happy',
+  //       '#worst-day-ever',
+  //       '#youcandoanything',
+  //       '#catmandoeverything'
+  //     ]);
+  //     const [postOne, postTwo, postThree] = await getAllPosts();
+  //     await addTagsToPost(postOne.id, [happy, inspo]);
+  //     await addTagsToPost(postTwo.id, [sad]);
+  //     await addTagsToPost(postThree.id, [happy, catman, inspo]);
+  //     console.log('...finished creating tags...')
+  //   } catch (err) {
+  //     console.log('...error creating tags...')
+  //     throw err;
+  //   }
+  // }
 
 
 
@@ -217,12 +226,12 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
-    await createInitialTags();
   } catch (error) {
     console.log("Error during rebuildDB")
     throw error;
   }
 }
+
 
 rebuildDB()
   .then(testDB)
