@@ -166,7 +166,7 @@ async function getUserById(userId) {
     if (!user) {
       return null;
     } else {
-      user.posts = await getPostsByUser(userID)}
+      user.posts = await getPostsByUser(userId)}
       return user;
     } catch (error) {
       throw error;

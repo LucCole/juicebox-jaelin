@@ -9,6 +9,7 @@ const {
   getAllPosts,
   addTagsToPost,
   createTags,
+  getPostsByTagName,
 
   
 
@@ -19,10 +20,11 @@ async function dropTables() {
     console.log("Starting to drop tables...");
 
     await client.query(`
+      DROP TABLE IF EXISTS post_tags;
+      DROP TABLE IF EXISTS tags;
       DROP TABLE IF EXISTS posts;
       DROP TABLE IF EXISTS users;
-      DROP TABLE IF EXISTS tags;
-      DROP TABLE IF EXISTS post_tags;
+  
     `);
 
     console.log("Finished dropping tables!");
@@ -52,18 +54,18 @@ async function createTables() {
      "authorId" INTEGER REFERENCES users(id) NOT NULL,
      title VARCHAR(255) NOT NULL,
       content TEXT NOT NULL,
-     active BOOLEAN DEFAULT true,
+     active BOOLEAN DEFAULT true
       );
 
     CREATE TABLE tags (
-      id, SERIAL PRIMARY KEY,
-      name, VARCHAR(225) UNIQUE NOT NULL,
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(225) UNIQUE NOT NULL
     );
 
     CREATE TABLE post_tags (
-    "postId", INTERGER REFERENCES posts(id),
-    "tagId", INTERGER REFERENCES tag(id),
-      UNIQUE ("postId, "tagId"),
+      "postId" INTEGER REFERENCES posts(id),
+      "tagId" INTEGER REFERENCES tags(id),
+      UNIQUE ("postId", "tagId")
     );
     `);
   
