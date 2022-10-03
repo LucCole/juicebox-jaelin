@@ -1,6 +1,7 @@
 const { Client } = require('pg') // imports the pg module
 
-const client = new Client('postgres://localhost:5432/juicebox-dev');
+// const client = new Client('postgres://localhost:5432/juicebox-dev');
+const client = new Client(process.env.DATABASE_URL || 'postgres://localhost:5432/juicebox-dev');
 
 async function createUser({ username, password, name, location }) {
   try {
@@ -23,6 +24,55 @@ async function createUser({ username, password, name, location }) {
   }
 }
 
+
+
+
+async function createPost({
+  authorId,
+  title,
+  content,
+  tags = []
+}) {
+  try {
+    const { rows: [ post ] } = await client.query(`
+      INSERT INTO posts("authorId", title, content) 
+      VALUES($1, $2, $3)
+      RETURNING *;
+    `, [authorId, title, content]);
+
+    const tagList = await createTags(tags);
+
+    return await addTagsToPost(post.id, tagList);
+  } catch (error) {
+    throw error;
+  }
+}
+
+//below is part 3 section 2
+const { requireUser } = require('./utils');
+
+postsRouter.post('/', requireUser, async (req, res, next) => {
+  const { title, content, tags = "" } = req.body;
+
+  const tagArr = tags.trim().split(/\s+/)
+  const postData = {};
+
+  // only send the tags if there are some to send
+  if (tagArr.length) {
+    postData.tags = tagArr;
+  }
+
+  try {
+    // add authorId, title, content to postData object
+    // const post = await createPost(postData);
+    // this will create the post and the tags for us
+    // if the post comes back, res.send({ post });
+    // otherwise, next an appropriate error object 
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
+//above is part 3 section 2
 
 
 async function getAllUsers() {
@@ -90,6 +140,49 @@ async function createPost({
   }
 }
 //mimic createUser few changes
+
+
+
+async function getPostById(postId) {
+  try {
+    const { rows: [ post ]  } = await client.query(`
+      SELECT *
+      FROM posts
+      WHERE id=$1;
+    `, [postId]);
+
+    // THIS IS NEW
+    if (!post) {
+      throw {
+        name: "PostNotFoundError",
+        message: "Could not find a post with that postId"
+      };
+    }
+    // NEWNESS ENDS HERE
+
+    const { rows: tags } = await client.query(`
+      SELECT tags.*
+      FROM tags
+      JOIN post_tags ON tags.id=post_tags."tagId"
+      WHERE post_tags."postId"=$1;
+    `, [postId])
+
+    const { rows: [author] } = await client.query(`
+      SELECT id, username, name, location
+      FROM users
+      WHERE id=$1;
+    `, [post.authorId])
+
+    post.tags = tags;
+    post.author = author;
+
+    delete post.authorId;
+
+    return post;
+  } catch (error) {
+    throw error;
+  }
+}
 
 async function updatePost(postId, fields = {}) {
   // read off the tags & remove that field 
@@ -239,6 +332,11 @@ async function getUserById(userId) {
       throw error;
     }
   }
+
+
+
+
+
   
 
 
@@ -347,6 +445,20 @@ async function getUserById(userId) {
   } 
 
 
+  async function getUserByUsername(username) {
+    try {
+      const { rows: [user] } = await client.query(`
+        SELECT *
+        FROM users
+        WHERE username=$1;
+      `, [username]);
+  
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 //exporting them
 module.exports = {  
   client,
@@ -362,6 +474,7 @@ module.exports = {
   createTags,
   createPostTag,
   addTagsToPost,
+  getUserByUsername
  
 
 }
